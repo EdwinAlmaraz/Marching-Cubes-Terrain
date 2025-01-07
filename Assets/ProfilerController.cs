@@ -8,7 +8,7 @@ using Unity.Profiling.LowLevel.Unsafe;
 using TMPro;
 
 public class ProfilerController : MonoBehaviour
-{   
+{
     ProfilerRecorder systemMemoryRecorder;
     ProfilerRecorder gcMemoryRecorder;
     ProfilerRecorder mainThreadTimeRecorder;
@@ -18,6 +18,10 @@ public class ProfilerController : MonoBehaviour
     ProfilerRecorder verticesCountRecorder;
 
     public TextMeshProUGUI m_StatsText;
+
+    System.IO.StreamWriter fileStream = null;
+    const string TRG_FILE_FMT = @"D:\log\log-{0:yyyy-MM-ddTHHmmss}.csv";
+    long frameCount = 0;
 
     static double GetRecorderFrameAverage(ProfilerRecorder recorder)
     {
@@ -38,6 +42,11 @@ public class ProfilerController : MonoBehaviour
 
     void OnEnable()
     {
+        fileStream = System.IO.File.CreateText(string.Format(TRG_FILE_FMT, DateTime.Now));
+
+        var line = @"FPS,GC Memory (MB),System Memory (MB),Draw Calls,Batches,Triangles,Vertices";
+        fileStream.WriteLine(line);
+
         systemMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         gcMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Reserved Memory");
         mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
@@ -56,11 +65,18 @@ public class ProfilerController : MonoBehaviour
         trianglesCountRecorder.Dispose();
         batchesCountRecorder.Dispose();
         verticesCountRecorder.Dispose();
+
+        if (fileStream != null)
+        {
+            fileStream.Flush();
+            fileStream.Close();
+        }
     }
 
     void Update()
     {
         var sb = new StringBuilder(500);
+
         sb.AppendLine($"Frame Time: {1000 / (GetRecorderFrameAverage(mainThreadTimeRecorder) * (1e-6f)):F1} FPS");// * (1e-6f):F1} ms");
         sb.AppendLine($"GC Memory: {gcMemoryRecorder.LastValue / (1024 * 1024)} MB");
         sb.AppendLine($"System Memory: {systemMemoryRecorder.LastValue / (1024 * 1024)} MB");
@@ -70,5 +86,14 @@ public class ProfilerController : MonoBehaviour
         sb.AppendLine($"Vertices: {verticesCountRecorder.LastValue}");
 
         m_StatsText.text = sb.ToString();
+
+        if (fileStream != null)
+        {
+            if (++frameCount > 60)
+            {
+                var line = $"\"{1000 / (GetRecorderFrameAverage(mainThreadTimeRecorder) * (1e-6f)):F1}\", \"{gcMemoryRecorder.LastValue / (1024 * 1024)}\", \"{systemMemoryRecorder.LastValue / (1024 * 1024)}\", \"{drawCallsCountRecorder.LastValue}\", \"{batchesCountRecorder.LastValue}\", \"{trianglesCountRecorder.LastValue}\", \"{verticesCountRecorder.LastValue}\"";
+                fileStream.WriteLine(line);
+            }
+        }
     }
 }
