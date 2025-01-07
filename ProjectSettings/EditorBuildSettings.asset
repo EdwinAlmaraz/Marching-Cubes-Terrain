@@ -9,6 +9,8 @@ EditorBuildSettings:
     path: Assets/Examples/Scenes/Procedural World Example.unity
     guid: 2c5cddc6c031b8b489bfc1264e60bb24
   m_configObjects:
+    Unity.XR.PXR.Settings: {fileID: 11400000, guid: 2262932fc9a4a8e4f9cd0097bbf8334d,
+      type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: b5ee80845d18e614d8e3abf00ce98aab,
       type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: d62c62826c6e74b428abce5621ae7ea1,
