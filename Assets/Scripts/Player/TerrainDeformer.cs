@@ -4,11 +4,16 @@ using Eldemarkki.VoxelTerrain.Utilities.Intersection;
 using Eldemarkki.VoxelTerrain.World;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.InputSystem;
 
 namespace Eldemarkki.VoxelTerrain.Player
 {
     public class TerrainDeformer : MonoBehaviour
     {
+        [Header("XR Interactor Settings")]
+        [SerializeField] private XRBaseController mainController;
+
         [Header("Terrain Deforming Settings")]
         [SerializeField] private VoxelWorld voxelWorld;
 
@@ -30,7 +35,7 @@ namespace Eldemarkki.VoxelTerrain.Player
         [SerializeField] private Color32 paintColor;
 
         [Header("Player Settings")]
-        [SerializeField] private Transform playerCamera;
+        [SerializeField] private Transform deformOriginTransform;
 
         private bool _isFlattening;
 
@@ -44,7 +49,7 @@ namespace Eldemarkki.VoxelTerrain.Player
 
         private void Update()
         {
-            Ray ray = new Ray(playerCamera.position, playerCamera.forward);
+            Ray ray = new Ray(deformOriginTransform.position, deformOriginTransform.forward);
             if (!Physics.Raycast(ray, out RaycastHit hit, maxReachDistance))
             {
                 if (hitIndicator) { hitIndicator.gameObject.SetActive(false); }
@@ -57,15 +62,15 @@ namespace Eldemarkki.VoxelTerrain.Player
                 hitIndicator.gameObject.SetActive(true);
             }
 
-            if (Input.GetKey(flatteningKey))
+            if (Input.GetKeyUp(flatteningKey))
             {
-                if (Input.GetMouseButtonDown(0))
+                if (mainController.selectInteractionState.active)//Input.GetMouseButtonDown(0))
                 {
                     _isFlattening = true;
                     _flatteningOrigin = hit.point;
                     _flatteningNormal = hit.normal;
                 }
-                else if (Input.GetMouseButtonUp(0))
+                else if (!mainController.selectInteractionState.active)// Input.GetMouseButtonUp(0))
                 {
                     _isFlattening = false;
                 }
@@ -76,7 +81,7 @@ namespace Eldemarkki.VoxelTerrain.Player
                 _isFlattening = false;
             }
 
-            if (Input.GetMouseButton(0))
+            if (mainController.selectInteractionState.active) // Input.GetMouseButton(0))
             {
                 if (_isFlattening)
                 {
@@ -87,7 +92,7 @@ namespace Eldemarkki.VoxelTerrain.Player
                     EditTerrain(hit.point, leftClickAddsTerrain);
                 }
             }
-            else if (Input.GetMouseButton(1))
+            else if (mainController.activateInteractionState.active)// Input.GetMouseButton(1))
             {
                 EditTerrain(hit.point, !leftClickAddsTerrain);
             }
@@ -121,7 +126,7 @@ namespace Eldemarkki.VoxelTerrain.Player
         /// </summary>
         private void FlattenTerrain()
         {
-            PlaneLineIntersectionResult result = IntersectionUtilities.PlaneLineIntersection(_flatteningOrigin, _flatteningNormal, playerCamera.position, playerCamera.forward, out float3 intersectionPoint);
+            PlaneLineIntersectionResult result = IntersectionUtilities.PlaneLineIntersection(_flatteningOrigin, _flatteningNormal, deformOriginTransform.position, deformOriginTransform.forward, out float3 intersectionPoint);
             if (result != PlaneLineIntersectionResult.OneHit) { return; }
 
             float flattenOffset = 0;
