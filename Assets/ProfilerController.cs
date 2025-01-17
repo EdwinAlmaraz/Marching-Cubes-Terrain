@@ -20,7 +20,7 @@ public class ProfilerController : MonoBehaviour
     public TextMeshProUGUI m_StatsText;
 
     System.IO.StreamWriter fileStream = null;
-    const string TRG_FILE_FMT = @"D:\log\log-{0:yyyy-MM-ddTHHmmss}.csv";
+    const string TRG_FILE_FMT = @"C:\profilerlogs\log-{0:yyyy-MM-ddTHHmmss}.csv";
     long frameCount = 0;
 
     static double GetRecorderFrameAverage(ProfilerRecorder recorder)
